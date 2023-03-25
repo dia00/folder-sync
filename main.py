@@ -1,11 +1,13 @@
 import os
-from hashlib import md5
 import shutil
+import time
 
 # function for writing operations in log file
 def log(message):
+    t = time.localtime()
+    current_time = time.strftime("%H:%M:%S", t)
     with open('log.txt', 'w') as f:
-        f.write(message)
+        f.write(t": "message)
 
 # function for comparing files
 def compareFiles(file1, file2):
@@ -16,7 +18,7 @@ def compareFiles(file1, file2):
             else:
                 return False
 
-# function for coparing folders       
+# function for comparing folders       
 def compareFolder(folder, sync):
     files = os.listdir(folder)
     syncFiles = os.listdir(sync)
@@ -39,16 +41,30 @@ syncPath = 'd:/Projects/folder-sync/sync'
 folderFiles = os.listdir('d:/Projects/folder-sync/folder')
 syncFiles = os.listdir('d:/Projects/folder-sync/sync')
 
-for file in folderFiles:
-    if file in syncFiles:
-        #check if our files are the same
-        if compareFiles(folderPath+'/'+file, syncPath+'/'+file):
-             print("folders up to date")
+while True:
+
+    if compareFolders(folderPath, syncPath):
+        print("File up to date")
+        time.sleep(120)
+        continue
+
+    for file in folderFiles:
+        if file in syncFiles:
+            #check if our files are the same
+            if compareFiles(folderPath+'/'+file, syncPath+'/'+file):
+                print(file+" is up to date")
+            else:
+                os.remove(syncPath+'/'+file)
+                shutil.copy(folderPath+'/'+file, syncPath) #or os.system("cp " +folderPath+'/'+file+' '+backup), but not on windows
+                print(file+" was updated")
         else:
-            os.remove(syncPath+'/'+file)
             shutil.copy(folderPath+'/'+file, syncPath)
-    else:
-        shutil.copy(folderPath+'/'+file, syncPath)
-        print("updated folder")
+            print(file+" was copied")
 
+    for file in syncFiles:
+        if file not in folderFiles:
+            os.remove(syncPath+'/'+file)
+            print(file+" was removed")
 
+    time.sleep(120)
+   
